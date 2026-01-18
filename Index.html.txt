@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Film Website - With Categories</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* =========================================
+           CSS RESET & VARIABLES
+           ========================================= */
+        :root {
+            --primary-color: #e50914;
+            --primary-glow: rgba(229, 9, 20, 0.4);
+            --background-dark: #0f0f0f;
+            --background-card: #1a1a1a;
+            --text-main: #ffffff;
+            --text-muted: #a1a1a1;
+            --font-main: 'Outfit', sans-serif;
+            --transition-fast: 0.2s ease;
+            --transition-smooth: 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            --container-width: 1200px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        a { text-decoration: none; color: inherit; transition: var(--transition-fast); }
+        ul { list-style: none; }
+        img { width: 100%; display: block; }
+        button { cursor: pointer; border: none; font-family: inherit; }
+
+        /* =========================================
+           ANIMATIONS
+           ========================================= */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .anim-fade-in { animation: fadeIn 0.5s ease forwards; }
+        .anim-slide-up { animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .hidden { display: none !important; opacity: 0; }
+        .fade-out { opacity: 0 !important; transition: opacity 0.4s ease; }
+
+        /* =========================================
+           HEADER
+           ========================================= */
+        header {
+            background-color: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 1rem 5%;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+        .logo span { color: white; }
+
+        nav ul { display: flex; gap: 2rem; align-items: center; }
+        nav a {
+            font-weight: 500; font-size: 0.95rem; color: var(--text-muted);
+            position: relative; display: flex; align-items: center; gap: 0.3rem;
+        }
+        nav a::after {
+            content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 0;
+            background-color: var(--primary-color); transition: width 0.3s ease;
+        }
+        nav a:hover::after { width: 100%; }
+        nav a:hover { color: var(--text-main); }
+
+        #search-input {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);
+            color: white; padding: 0.6rem 1.2rem; border-radius: 50px; width: 250px; transition: var(--transition-fast);
+        }
+        #search-input:focus { outline: none; background: rgba(255,255,255,0.15); width: 280px; border-color: var(--primary-color); }
+
+        /* =========================================
+           HOME VIEW & CATEGORY BAR
+           ========================================= */
+        .hero {
+            height: 75vh; position: relative; display: flex; align-items: center; padding: 0 5%; overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
+            object-fit: cover;
+        }
+        .hero-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, #0f0f0f 10%, rgba(15,15,15,0.8) 50%, rgba(15,15,15,0.2) 100%),
+                        linear-gradient(to top, #0f0f0f 0%, transparent 50%); z-index: -1;
+        }
+        .hero-content { max-width: 600px; opacity: 0; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; line-height: 1.1; }
+        .hero p { font-size: 1.2rem; margin-bottom: 2.5rem; color: #ddd; }
+        
+        .btn-primary {
+            background-color: var(--primary-color); color: white; padding: 1rem 2.5rem;
+            border-radius: 50px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.8rem;
+            transition: var(--transition-fast); box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 25px var(--primary-glow); }
+
+        /* Category Filter Bar */
+        .category-filter {
+            display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;
+            margin-bottom: 3rem; padding: 1rem 0;
+        }
+        
+        .category-btn {
+            background: rgba(255,255,255,0.05); color: #ccc; border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.6rem 1.5rem; border-radius: 50px; font-weight: 500; font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .category-btn:hover {
+            background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;
+            transform: translateY(-2px);
+        }
+        
+        .category-btn.active {
+            background: var(--primary-color); color: white; border-color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* Movie Grid */
+        .container { max-width: var(--container-width); margin: 0 auto; padding: 4rem 1.5rem 2rem; }
+        .section-title { font-size: 1.8rem; margin-bottom: 1.5rem; font-weight: 700; border-left: 4px solid var(--primary-color); padding-left: 1rem; }
+        
+        .movie-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2.5rem;
+        }
+        .movie-card {
+            background-color: transparent; border-radius: 12px; overflow: hidden; cursor: pointer;
+            position: relative; transform: translateY(30px); opacity: 0; transition: var(--transition-smooth);
+        }
+        .movie-card.visible { transform: translateY(0); opacity: 1; }
+        .movie-card:hover { transform: translateY(-10px) !important; z-index: 10; }
+        
+        .poster-wrapper {
+            position: relative; padding-top: 150%; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .poster-wrapper img {
+            position: absolute; top: 0; left: 0; height: 100%; object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .movie-card:hover .poster-wrapper img { transform: scale(1.1); }
+        .poster-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: 0.3s ease;
+        }
+        .movie-card:hover .poster-overlay { opacity: 1; }
+        .play-icon { font-size: 3rem; color: white; transform: scale(0.8); transition: 0.3s; }
+        .movie-card:hover .play-icon { transform: scale(1); }
+
+        .movie-info { padding: 1.2rem 0.2rem; }
+        .movie-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .movie-meta { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); }
+        .rating-badge { background: rgba(255,255,255,0.1); color: #46d369; padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 700; }
+
+        /* =========================================
+           DETAILS VIEW
+           ========================================= */
+        #details-view {
+            opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease;
+            padding-top: 6rem;
+        }
+        #details-view.active { opacity: 1; transform: translateY(0); }
+        .details-container { display: grid; grid-template-columns: 350px 1fr; gap: 4rem; }
+        .details-poster img { border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); animation: slideUp 0.8s ease 0.2s forwards; }
+        
+        .details-info > * { opacity: 0; animation: fadeIn 0.8s ease forwards; }
+        .details-info h1 { font-size: 3rem; margin-bottom: 0.5rem; animation-delay: 0.3s; }
+        .tags { display: flex; gap: 1rem; color: var(--text-muted); margin-bottom: 2rem; animation-delay: 0.4s; }
+        .tags span { background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; }
+        .description { font-size: 1.15rem; color: #ccc; margin-bottom: 2.5rem; animation-delay: 0.5s; }
+        .video-player { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; margin-bottom: 2.5rem; animation-delay: 0.6s; }
+
+        .action-bar { display: flex; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+        .btn-action {
+            background: rgba(255,255,255,0.1); color: white; padding: 1rem 1.5rem; border-radius: 8px;
+            display: flex; align-items: center; gap: 0.8rem; font-weight: 600; transition: 0.3s;
+        }
+        .btn-action:hover { background: rgba(255,255,255,0.2); }
+        .btn-action.active { background: var(--primary-color); }
+
+        .rating-section { margin-bottom: 3rem; padding: 2rem; background: linear-gradient(145deg, #1a1a1a, #151515); border-radius: 12px; }
+        .stars { display: flex; gap: 0.5rem; font-size: 2.5rem; color: #333; cursor: pointer; }
+        .stars i:hover, .stars i.active { color: #ffc107; }
+
+        /* Footer */
+        footer {
+            background-color: #050505; padding: 3rem 5%; margin-top: 6rem; text-align: center; color: #555; border-top: 1px solid #222;
+        }
+        .social-links a { font-size: 1.5rem; margin: 0 10px; color: #777; transition: 0.3s; }
+        .social-links a:hover { color: white; }
+
+        #toast {
+            position: fixed; bottom: 30px; right: 30px; background: white; color: black; padding: 1rem 2rem;
+            border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateY(100px); opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .details-container { grid-template-columns: 1fr; }
+            nav ul { display: none; }
+            .category-btn { padding: 0.5rem 1rem; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">FILM <span>WEB</span></div>
+        <nav>
+            <ul>
+                <li><a href="#" onclick="app.showHome()"><i class="ph ph-house"></i> Home</a></li>
+                <li><a href="#">Movies</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search...">
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <!-- Home View -->
+        <section id="home-view">
+            <div class="hero">
+                <video class="hero-bg" autoplay muted loop playsinline>
+                    <source src="https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-background-1610-large.mp4" type="video/mp4">
+                </video>
+                <div class="hero-overlay"></div>
+                <div class="hero-content" id="hero-content">
+                    <h1>Infinite Horizons</h1>
+                    <p>Experience the journey of a lifetime in this year's most anticipated sci-fi thriller.</p>
+                    <button class="btn-primary" onclick="app.showMovieDetails(1)">
+                        <i class="ph-fill ph-play"></i> Watch Trailer
+                    </button>
+                </div>
+            </div>
+
+            <div class="container">
+                <div class="section-title">Browse Movies</div>
+                
+                <!-- Category Filter Bar -->
+                <div class="category-filter" id="category-filter">
+                    <!-- Categories injected via JS -->
+                </div>
+
+                <div class="movie-grid" id="movie-grid">
+                    <!-- Movies injected via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Movie Details View -->
+        <section id="details-view">
+            <div class="container details-container">
+                <div class="details-poster">
+                    <img id="detail-poster" src="" alt="Poster">
+                </div>
+                <div class="details-info">
+                    <h1 id="detail-title">Title</h1>
+                    <div class="tags">
+                        <span id="detail-year">Year</span>
+                        <span id="detail-duration">Time</span>
+                        <span id="detail-genre">Genre</span>
+                        <span class="rating-badge" id="detail-rating">Rating</span>
+                    </div>
+                    <p class="description" id="detail-desc">Desc...</p>
+                    <div class="video-player" id="detail-video-container"></div>
+                    <div class="action-bar">
+                        <button class="btn-action" id="btn-watchlist" onclick="app.toggleWatchlist()">
+                            <i class="ph ph-plus"></i> Add to Watchlist
+                        </button>
+                        <button class="btn-action" onclick="app.handleLike()"><i class="ph ph-thumbs-up"></i> Like</button>
+                    </div>
+                    <div class="rating-section">
+                        <h3>Rate</h3>
+                        <div class="stars" id="star-rating">
+                            <i class="ph ph-star" data-value="1"></i><i class="ph ph-star" data-value="2"></i><i class="ph ph-star" data-value="3"></i><i class="ph ph-star" data-value="4"></i><i class="ph ph-star" data-value="5"></i>
+                        </div>
+                    </div>
+                    <div class="comments-section">
+                        <h3>Comments</h3>
+                        <div class="comment-list" id="comment-list"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast">Notification</div>
+
+    <footer>
+        <div class="social-links">
+            <a href="#"><i class="ph ph-facebook-logo"></i></a>
+            <a href="#"><i class="ph ph-instagram-logo"></i></a>
+        </div>
+        <p>&copy; 2026 Film Website | Developed by Minura Thejan</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        const moviesData = [
+            { id: 1, title: "Infinite Horizons", year: "2024", duration: "2h 10m", genre: "Sci-Fi", rating: 4.8, poster: "https://picsum.photos/seed/mov1/300/450", video: "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1", views: 1250, description: "Sci-fi adventure." },
+            { id: 2, title: "The Last Detective", year: "2023", duration: "1h 55m", genre: "Mystery", rating: 4.2, poster: "https://picsum.photos/seed/mov2/300/450", video: "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1", views: 840, description: "Mystery story." },
+            { id: 3, title: "Crimson Shadows", year: "2023", duration: "2h 30m", genre: "Action", rating: 3.9, poster: "https://picsum.photos/seed/mov3/300/450", video: "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1", views: 2300, description: "Action thriller." },
+            { id: 4, title: "Echoes of Time", year: "2022", duration: "1h 45m", genre: "Drama", rating: 4.5, poster: "https://picsum.photos/seed/mov4/300/450", video: "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1", views: 560, description: "Drama." },
+            { id: 5, title: "Cyber Punk 2099", year: "2025", duration: "2h 05m", genre: "Sci-Fi", rating: 4.7, poster: "https://picsum.photos/seed/mov5/300/450", video: "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1", views: 3100, description: "Cyberpunk." },
+            { id: 6, title: "Wilderness", year: "2023", duration: "1h 50m", genre: "Adventure", rating: 4.0, poster: "https://picsum.photos/seed/mov6/300/450", video: "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1", views: 900, description: "Adventure." },
+            { id: 7, title: "Laugh Track", year: "2024", duration: "1h 40m", genre: "Comedy", rating: 3.5, poster: "https://picsum.photos/seed/mov7/300/450", video: "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1", views: 1200, description: "Comedy." },
+            { id: 8, title: "Nightmare Realm", year: "2022", duration: "1h 55m", genre: "Horror", rating: 4.1, poster: "https://picsum.photos/seed/mov8/300/450", video: "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1", views: 1800, description: "Horror." }
+        ];
+
+        const app = {
+            currentCategory: 'All',
+            currentMovieId: null,
+            watchlist: JSON.parse(localStorage.getItem('watchlist')) || [],
+            
+            init: function() {
+                this.renderCategories();
+                this.renderGrid(moviesData); // Initial render
+                this.setupSearch();
+                this.setupStarRating();
+                setTimeout(() => document.getElementById('hero-content').classList.add('anim-slide-up'), 100);
+            },
+
+            // --- Category Logic ---
+            renderCategories: function() {
+                const container = document.getElementById('category-filter');
+                // Extract unique genres and add 'All'
+                const genres = ['All', ...new Set(moviesData.map(m => m.genre))];
+                
+                container.innerHTML = '';
+                
+                genres.forEach(genre => {
+                    const btn = document.createElement('button');
+                    btn.className = `category-btn ${genre === 'All' ? 'active' : ''}`;
+                    btn.textContent = genre;
+                    btn.onclick = () => this.filterMovies(genre, btn);
+                    container.appendChild(btn);
+                });
+            },
+
+            filterMovies: function(category, clickedBtn) {
+                // Update active state
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                clickedBtn.classList.add('active');
+                
+                this.currentCategory = category;
+
+                // Filter logic
+                const filteredMovies = category === 'All' 
+                    ? moviesData 
+                    : moviesData.filter(m => m.genre === category);
+
+                this.renderGrid(filteredMovies);
+            },
+
+            // --- Grid Render ---
+            renderGrid: function(movies) {
+                const grid = document.getElementById('movie-grid');
+                grid.innerHTML = '';
+                
+                if(movies.length === 0) {
+                    grid.innerHTML = '<p style="color:#666; grid-column: 1/-1; text-align:center;">No movies found in this category.</p>';
+                    return;
+                }
+
+                movies.forEach((movie, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'movie-card';
+                    card.style.transitionDelay = `${index * 0.1}s`;
+                    card.onclick = () => this.showMovieDetails(movie.id);
+                    
+                    card.innerHTML = `
+                        <div class="poster-wrapper">
+                            <img src="${movie.poster}" alt="${movie.title}" loading="lazy">
+                            <div class="poster-overlay"><i class="ph-fill ph-play-circle play-icon"></i></div>
+                        </div>
+                        <div class="movie-info">
+                            <div class="movie-title">${movie.title}</div>
+                            <div class="movie-meta">
+                                <span>${movie.year}</span>
+                                <span class="rating-badge">${movie.rating}</span>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                // Trigger animation
+                setTimeout(() => {
+                    document.querySelectorAll('.movie-card').forEach(c => c.classList.add('visible'));
+                }, 100);
+            },
+
+            // --- Navigation ---
+            showHome: function() {
+                const detailsView = document.getElementById('details-view');
+                const homeView = document.getElementById('home-view');
+                detailsView.classList.remove('active');
+                setTimeout(() => {
+                    detailsView.style.display = 'none';
+                    homeView.style.display = 'block';
+                    window.scrollTo(0,0);
+                    homeView.style.opacity = 1;
+                    this.retriggerCardAnimations();
+                }, 400);
+                this.currentMovieId = null;
+            },
+
+            showMovieDetails: function(id) {
+                const movie = moviesData.find(m => m.id === id);
+                if (!movie) return;
+                this.currentMovieId = id;
+
+                const homeView = document.getElementById('home-view');
+                const detailsView = document.getElementById('details-view');
+                
+                homeView.classList.add('fade-out');
+                setTimeout(() => {
+                    homeView.style.display = 'none';
+                    homeView.classList.remove('fade-out');
+                    detailsView.style.display = 'block';
+                    window.scrollTo(0,0);
+
+                    document.getElementById('detail-poster').src = movie.poster;
+                    document.getElementById('detail-title').textContent = movie.title;
+                    document.getElementById('detail-year').textContent = movie.year;
+                    document.getElementById('detail-genre').textContent = movie.genre;
+                    document.getElementById('detail-desc').textContent = movie.description;
+                    document.getElementById('detail-video-container').innerHTML = `<iframe src="${movie.video}" title="Trailer" allowfullscreen></iframe>`;
+                    
+                    this.updateWatchlistButton();
+                    requestAnimationFrame(() => detailsView.classList.add('active'));
+                }, 400);
+            },
+
+            retriggerCardAnimations: function() {
+                const cards = document.querySelectorAll('.movie-card');
+                cards.forEach(c => { c.classList.remove('visible'); void c.offsetWidth; c.classList.add('visible'); });
+            },
+
+            setupSearch: function() {
+                const searchInput = document.getElementById('search-input');
+                searchInput.addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    
+                    // Filter based on current category OR search term
+                    let baseMovies = this.currentCategory === 'All' 
+                        ? moviesData 
+                        : moviesData.filter(m => m.genre === this.currentCategory);
+
+                    const filtered = baseMovies.filter(m => m.title.toLowerCase().includes(term));
+                    this.renderGrid(filtered);
+                    
+                    if(document.getElementById('details-view').style.display === 'block') this.showHome();
+                });
+            },
+
+            toggleWatchlist: function() {
+                if (!this.currentMovieId) return;
+                const btn = document.getElementById('btn-watchlist');
+                const index = this.watchlist.indexOf(this.currentMovieId);
+                
+                if (index === -1) {
+                    this.watchlist.push(this.currentMovieId);
+                    this.showToast('Added to Watchlist');
+                } else {
+                    this.watchlist.splice(index, 1);
+                    this.showToast('Removed');
+                }
+                
+                localStorage.setItem('watchlist', JSON.stringify(this.watchlist));
+                this.updateWatchlistButton();
+            },
+
+            updateWatchlistButton: function() {
+                const btn = document.getElementById('btn-watchlist');
+                const index = this.watchlist.indexOf(this.currentMovieId);
+                if (index !== -1) {
+                    btn.classList.add('active');
+                    btn.innerHTML = '<i class="ph ph-check"></i> In Watchlist';
+                } else {
+                    btn.classList.remove('active');
+                    btn.innerHTML = '<i class="ph ph-plus"></i> Add to Watchlist';
+                }
+            },
+
+            handleLike: function() { this.showToast('Liked!'); },
+            setupStarRating: function() {
+                const stars = document.querySelectorAll('#star-rating i');
+                stars.forEach(s => s.addEventListener('click', (e) => {
+                    const val = parseInt(e.target.getAttribute('data-value'));
+                    stars.forEach(st => {
+                        st.classList.toggle('active', parseInt(st.getAttribute('data-value')) <= val);
+                    });
+                    this.showToast(`Rated ${val} stars`);
+                }));
+            },
+            showToast: function(msg) {
+                const t = document.getElementById('toast');
+                t.textContent = msg; t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 3000);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
